@@ -861,6 +861,7 @@ ggplot(dfG, aes(x = Group, y = Abundance, fill = Genus_clean)) +
 
 ![](Article_report_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
 
+Le genre majoritaire est Faecalibacterium ce qui est cohérent avec l'article. Néanmoins, d'autres genre sont identifiés comme abondant 
 ### **Raréfaction**
 
 ``` r
