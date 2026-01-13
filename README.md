@@ -738,24 +738,6 @@ ps
     ## sample_data() Sample Data:       [ 15 samples by 7 sample variables ]
     ## tax_table()   Taxonomy Table:    [ 2251 taxa by 6 taxonomic ranks ]
 
-### **Arbre phylogénétique annoté**
-
-``` r
-library(Biostrings)
-library(ape)
-```
-
-    ## 
-    ## Attaching package: 'ape'
-
-    ## The following object is masked from 'package:ShortRead':
-    ## 
-    ##     zoom
-
-    ## The following object is masked from 'package:Biostrings':
-    ## 
-    ##     complement
-
 ``` r
 library(phangorn)
 
@@ -779,74 +761,6 @@ table(widths)
     ## 355 278 382  20  22   6   5   4   1   2   5   2   4   4  16  13  38 136   6   3 
     ## 428 
     ##  14
-
-``` r
-# Garder uniquement la longueur la plus fréquente
-main_len <- as.integer(names(sort(table(widths), decreasing = TRUE))[1])
-keep     <- which(widths == main_len)
-
-dna <- dna_all[keep]                       
-asv_ids <- paste0("ASV", seq_along(dna))
-names(dna) <- asv_ids
-
-# Filtrer la table d’abondance et la taxo 
-seqtab_filt <- seqtab.nochim[, keep, drop = FALSE]
-colnames(seqtab_filt) <- asv_ids
-
-taxa_filt <- taxa[keep, , drop = FALSE]    
-rownames(taxa_filt) <- asv_ids
-
-## Conversion en objet phangorn
-dna_phy <- as.phyDat(dna, type = "DNA")
-
-## Matrice de distances + arbre Neighbor-Joining
-dm     <- dist.ml(dna_phy)
-treeNJ <- NJ(dm)
-
-## Maximum likelihood (amélioration de l’arbre)
-fit  <- pml(treeNJ, data = dna_phy)
-fitG <- optim.pml(fit, model = "GTR", optInv = TRUE, optGamma = TRUE)
-```
-
-    ## only one rate class, ignored optGamma
-
-    ## optimize edge weights:  -57412.98 --> -56215.29 
-    ## optimize rate matrix:  -56215.29 --> -54985.03 
-    ## optimize invariant sites:  -54985.03 --> -53658.78 
-    ## optimize rate matrix:  -53645.34 --> -53631.46 
-    ## optimize invariant sites:  -53631.46 --> -53631.46 
-    ## optimize rate matrix:  -53631.46 --> -53631.46 
-    ## optimize invariant sites:  -53631.46 --> -53631.46
-
-``` r
-treeML <- fitG$tree   # arbre final
-```
-
-``` r
-OTU  <- otu_table(as.matrix(seqtab_filt), taxa_are_rows = FALSE)
-TAX  <- tax_table(as.matrix(taxa_filt))
-SAMP <- sample_data(meta_phy)
-TREE <- phy_tree(treeML)
-RS   <- refseq(dna)
-
-
-ps <- phyloseq(OTU, TAX, SAMP, TREE, RS)
-
-ps.Faecalibacterium <- subset_taxa(ps, Genus == "Faecalibacterium")
-
-plot_tree(ps.Faecalibacterium, color = "Group", label.tips = "Genus", size = "abundance")
-```
-
-    ## Warning: `aes_string()` was deprecated in ggplot2 3.0.0.
-    ## ℹ Please use tidy evaluation idioms with `aes()`.
-    ## ℹ See also `vignette("ggplot2-in-packages")` for more information.
-    ## ℹ The deprecated feature was likely used in the phyloseq package.
-    ##   Please report the issue at <https://github.com/joey711/phyloseq/issues>.
-    ## This warning is displayed once every 8 hours.
-    ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
-    ## generated.
-
-![](Article_report_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
 
 ### **Alpha Diversité**
 
@@ -999,37 +913,6 @@ plot_ordination(ps.rare, ord_rare, color = "Group") +
 On observe bien qu’avec et sans raréfaction, on voit que les groupe HBC
 et LBC sont très proche
 
-### **La fonction plot network**
-
-``` r
-ps_20 <- prune_taxa(taxa_sums(ps) > 20, ps)
-jg <- make_network(ps_20, type = "taxa", dist.fun = "bray",
-                   max.dist = 0.7)
-plot_network(jg, ps_20, "taxa", color = "Phylum")
-```
-
-    ## Warning: `aes_string()` was deprecated in ggplot2 3.0.0.
-    ## ℹ Please use tidy evaluation idioms with `aes()`.
-    ## ℹ See also `vignette("ggplot2-in-packages")` for more information.
-    ## ℹ The deprecated feature was likely used in the phyloseq package.
-    ##   Please report the issue at <https://github.com/joey711/phyloseq/issues>.
-    ## This warning is displayed once every 8 hours.
-    ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
-    ## generated.
-
-    ## Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
-    ## ℹ Please use `linewidth` instead.
-    ## ℹ The deprecated feature was likely used in the phyloseq package.
-    ##   Please report the issue at <https://github.com/joey711/phyloseq/issues>.
-    ## This warning is displayed once every 8 hours.
-    ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
-    ## generated.
-
-![](Article_report_files/figure-gfm/unnamed-chunk-41-1.png)<!-- -->
-
-On voit ici que le phylum “Bacillota” est majoritairement présent dans
-les différents groupes
-
 ### **La heatmap**
 
 ``` r
@@ -1058,8 +941,8 @@ ggplot(df_mean, aes(x = Group, y = Genus, fill = Abundance)) +
 
 ![](Article_report_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
 
-“Enterocloster” a une abondance relative bien supérieur au autres dans
-les groupe CON et HBC
+“Enterocloster” a une abondance relative bien supérieur aux autres dans
+les groupes CON et HBC
 
 ### **Statistique d’écart**
 
@@ -1173,3 +1056,7 @@ plot_clusgap(gs)
 On observe ici que les “gaps” sont proche de 0 ou négative ce qui
 signifie que le clustering est soit similaire à un nuage aléatoire, soit
 qu’il n’est pas plus compact.
+
+### **Conclusion**
+
+Pour conclure, on retrouve ici le même phylum majoritaire, Bacillota (anciennement Firmicutes). En revanche, le DADA2 ainsi que Phyloseq retrouve d'autre genre majoritaire que l'article ne mentionne pas ce qui est du à une autre pipeline utilisée par les auteurs, QIIME2 qui rend l'analyse plus précise que seulement DADA2.
